@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Database.MongoDB.LeChatelier.Internal.Types
+module Database.MongoDB.Wrapper.Internal.Types
   ( Config (..)
   , DeployConfig (..)
   , MongoConfig (..)

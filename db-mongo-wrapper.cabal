@@ -1,0 +1,37 @@
+name:           db-mongo-wrapper
+version:        0.1.0.0
+synopsis:       Library for simplified interaction with mongo database in our projects
+description:    Library for simplified interaction with mongo database in our projects
+homepage:       https://github.com/biocad/db-mongo-wrapper#readme
+bug-reports:    https://github.com/biocad/db-mongo-wrapper/issues
+author:         Alexnadr Sadovnikov
+maintainer:     sadovnikovav@biocad.ru
+copyright:      2017 Alexandr Sadovnikov
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     Database.MongoDB.Wrapper
+  other-modules:       Database.MongoDB.Wrapper.Internal.AesonBsonConverter
+                     , Database.MongoDB.Wrapper.Internal.Interaction
+                     , Database.MongoDB.Wrapper.Internal.Types
+  build-depends:       base >=4.7 && <5
+                     , aeson
+                     , bson
+                     , bytestring
+                     , deepseq
+                     , directory
+                     , either
+                     , mongoDB
+                     , scientific
+                     , text
+                     , unordered-containers
+                     , vector
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/biocad/db-mongo-wrapper

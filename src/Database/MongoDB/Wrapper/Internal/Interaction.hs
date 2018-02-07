@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Database.MongoDB.LeChatelier.Internal.Interaction
+module Database.MongoDB.Wrapper.Internal.Interaction
   ( closePipe
   , deleteFromDB
   , getAllS
@@ -10,27 +10,26 @@ module Database.MongoDB.LeChatelier.Internal.Interaction
   , putIntoDB, putIntoDBPipe
   ) where
 
-import           Control.Arrow                                            ((&&&))
-import           Control.DeepSeq                                          (NFData, force)
-import           Control.Exception                                        (evaluate)
-import           Control.Monad                                            (join)
-import           Data.Aeson                                               (FromJSON, ToJSON, decode,
-                                                                           fromJSON, toJSON)
-import           Data.Aeson.Types                                         (Result (..))
-import qualified Data.Bson                                                as B (Value (..))
-import qualified Data.ByteString.Lazy.Char8                               as BS (readFile)
-import           Data.Either.Combinators                                  (fromRight')
-import           Data.Maybe                                               (fromJust)
-import           Data.Text                                                (Text)
-import           Database.MongoDB                                         (Document, Field, Pipe,
-                                                                           access, close, connect,
-                                                                           deleteAll, find, host,
-                                                                           insertAll_, insert_,
-                                                                           limit, master, rest,
-                                                                           select)
-import           Database.MongoDB.LeChatelier.Internal.AesonBsonConverter (fromDocument, toBson)
-import           Database.MongoDB.LeChatelier.Internal.Types              (cHost, deploy, mongo)
-import           System.Directory                                         (doesFileExist)
+import           Control.Arrow                                        ((&&&))
+import           Control.DeepSeq                                      (NFData, force)
+import           Control.Exception                                    (evaluate)
+import           Control.Monad                                        (join)
+import           Data.Aeson                                           (FromJSON, ToJSON, decode,
+                                                                       fromJSON, toJSON)
+import           Data.Aeson.Types                                     (Result (..))
+import qualified Data.Bson                                            as B (Value (..))
+import qualified Data.ByteString.Lazy.Char8                           as BS (readFile)
+import           Data.Either.Combinators                              (fromRight')
+import           Data.Maybe                                           (fromJust)
+import           Data.Text                                            (Text)
+import           Database.MongoDB                                     (Document, Field, Pipe,
+                                                                       access, close, connect,
+                                                                       deleteAll, find, host,
+                                                                       insertAll_, insert_, limit,
+                                                                       master, rest, select)
+import           Database.MongoDB.Wrapper.Internal.AesonBsonConverter (fromDocument, toBson)
+import           Database.MongoDB.Wrapper.Internal.Types              (cHost, deploy, mongo)
+import           System.Directory                                     (doesFileExist)
 
 dbHost :: IO String
 dbHost = do
@@ -39,9 +38,6 @@ dbHost = do
         config <- decode <$> BS.readFile "config.json"
         return (cHost (mongo (deploy (fromJust config))))
     else return "127.0.0.1"
-
-toLoad :: Int
-toLoad = 10000 -- Maximum number of molecules that we can load into RAM
 
 putIntoDB :: ToJSON a => Text -> Text -> a -> IO ()
 putIntoDB dataBaseName collectionName obj = do
@@ -80,8 +76,8 @@ deleteFromDB selectors dataBaseName collectionName = do
   _ <- access pipe master dataBaseName (deleteAll collectionName (fmap (id &&& const []) selectors))
   close pipe
 
-getAllS :: (FromJSON a, NFData a) => Text -> Text -> [Field] -> IO [a]
-getAllS dBName collName selection = do
+getAllS :: (FromJSON a, NFData a) => Int -> Text -> Text -> [Field] -> IO [a]
+getAllS toLoad dBName collName selection = do
   pipe <- join (connect <$> fmap host dbHost)
   resS <- access pipe master dBName $ find ((select selection collName) {limit = fromIntegral toLoad}) >>= rest
   close pipe

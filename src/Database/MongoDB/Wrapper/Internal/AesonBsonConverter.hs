@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Database.MongoDB.LeChatelier.Internal.AesonBsonConverter
+module Database.MongoDB.Wrapper.Internal.AesonBsonConverter
   ( fromBson, toBson
   , fromDocument
   ) where
