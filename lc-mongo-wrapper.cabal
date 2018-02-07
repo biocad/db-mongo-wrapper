@@ -1,5 +1,5 @@
 name:           lc-mongo-wrapper
-version:        0.1.0.0
+version:        0.1.0.1
 synopsis:       Library for simplified interaction with mongo dtabase in LeChatelier project
 description:    Library for simplified interaction with mongo dtabase in LeChatelier project
 homepage:       https://github.com/biocad/lc-mongo-wrapper#readme
