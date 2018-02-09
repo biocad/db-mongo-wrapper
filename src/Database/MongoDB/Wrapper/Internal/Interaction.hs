@@ -14,13 +14,11 @@ import           Control.Arrow                                        ((&&&))
 import           Control.DeepSeq                                      (NFData, force)
 import           Control.Exception                                    (evaluate)
 import           Control.Monad                                        (join)
-import           Data.Aeson                                           (FromJSON, ToJSON, decode,
-                                                                       fromJSON, toJSON)
+import           Data.Aeson                                           (FromJSON, ToJSON, fromJSON,
+                                                                       toJSON)
 import           Data.Aeson.Types                                     (Result (..))
 import qualified Data.Bson                                            as B (Value (..))
-import qualified Data.ByteString.Lazy.Char8                           as BS (readFile)
 import           Data.Either.Combinators                              (fromRight')
-import           Data.Maybe                                           (fromJust)
 import           Data.Text                                            (Text)
 import           Database.MongoDB                                     (Document, Field, Pipe,
                                                                        access, close, connect,
@@ -28,16 +26,10 @@ import           Database.MongoDB                                     (Document,
                                                                        insertAll_, insert_, limit,
                                                                        master, rest, select)
 import           Database.MongoDB.Wrapper.Internal.AesonBsonConverter (fromDocument, toBson)
-import           Database.MongoDB.Wrapper.Internal.Types              (cHost, deploy, mongo)
-import           System.Directory                                     (doesFileExist)
+import           System.BCD.Config.Mongo                              (MongoConfig (..), getConfig)
 
 dbHost :: IO String
-dbHost = do
-    doesConfigExist <- doesFileExist "config.json"
-    if doesConfigExist then do
-        config <- decode <$> BS.readFile "config.json"
-        return (cHost (mongo (deploy (fromJust config))))
-    else return "127.0.0.1"
+dbHost = fmap _host getConfig
 
 putIntoDB :: ToJSON a => Text -> Text -> a -> IO ()
 putIntoDB dataBaseName collectionName obj = do
