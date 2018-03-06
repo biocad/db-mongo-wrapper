@@ -11,25 +11,40 @@ module Database.MongoDB.Wrapper.Internal.Interaction
   ) where
 
 import           Control.Arrow                                        ((&&&))
-import           Control.DeepSeq                                      (NFData, force)
+import           Control.DeepSeq                                      (NFData,
+                                                                       force)
 import           Control.Exception                                    (evaluate)
 import           Control.Monad                                        (join)
-import           Data.Aeson                                           (FromJSON, ToJSON, fromJSON,
+import           Data.Aeson                                           (FromJSON,
+                                                                       ToJSON,
+                                                                       fromJSON,
                                                                        toJSON)
 import           Data.Aeson.Types                                     (Result (..))
 import qualified Data.Bson                                            as B (Value (..))
 import           Data.Either.Combinators                              (fromRight')
 import           Data.Text                                            (Text)
-import           Database.MongoDB                                     (Document, Field, Pipe,
-                                                                       access, close, connect,
-                                                                       deleteAll, find, host,
-                                                                       insertAll_, insert_, limit,
-                                                                       master, rest, select)
-import           Database.MongoDB.Wrapper.Internal.AesonBsonConverter (fromDocument, toBson)
-import           System.BCD.Config.Mongo                              (MongoConfig (..), getConfig)
+import           Database.MongoDB                                     (Document,
+                                                                       Field,
+                                                                       Pipe,
+                                                                       access,
+                                                                       close,
+                                                                       connect,
+                                                                       deleteAll,
+                                                                       find,
+                                                                       host,
+                                                                       insertAll_,
+                                                                       insert_,
+                                                                       limit,
+                                                                       master,
+                                                                       rest,
+                                                                       select)
+import           Database.MongoDB.Wrapper.Internal.AesonBsonConverter (fromDocument,
+                                                                       toBson)
+import           System.BCD.Config.Mongo                              (FromJsonConfig (..),
+                                                                       MongoConfig (..))
 
 dbHost :: IO String
-dbHost = fmap _host getConfig
+dbHost = fmap _host fromJsonConfig
 
 putIntoDB :: ToJSON a => Text -> Text -> a -> IO ()
 putIntoDB dataBaseName collectionName obj = do
