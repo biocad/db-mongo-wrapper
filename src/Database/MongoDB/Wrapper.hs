@@ -1,19 +1,8 @@
 module Database.MongoDB.Wrapper
-  ( closePipe
-  , deleteFromDB
-  , fromBson
-  , fromDocument
-  , getAllS
-  , getFromDB
-  , getPipe
-  , insertAllDB
-  , putIntoDB, putIntoDBPipe
-  , toBson
+  (
+    module Database.MongoDB.Wrapper.Internal.AesonBsonConverter
+  , module Database.MongoDB.Wrapper.Internal.Interaction
   ) where
 
-import           Database.MongoDB.Wrapper.Internal.AesonBsonConverter (fromBson, fromDocument,
-                                                                       toBson)
-import           Database.MongoDB.Wrapper.Internal.Interaction        (closePipe, deleteFromDB,
-                                                                       getAllS, getFromDB, getPipe,
-                                                                       insertAllDB, putIntoDB,
-                                                                       putIntoDBPipe)
+import           Database.MongoDB.Wrapper.Internal.AesonBsonConverter
+import           Database.MongoDB.Wrapper.Internal.Interaction

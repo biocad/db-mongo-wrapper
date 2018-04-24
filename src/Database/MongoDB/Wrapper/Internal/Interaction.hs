@@ -1,7 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 
 module Database.MongoDB.Wrapper.Internal.Interaction
-  ( closePipe
+  (
+    Database.MongoDB.Pipe
+  , Database.MongoDB.Field
+  , closePipe
   , deleteFromDB
   , getAllS
   , getFromDB
@@ -25,17 +29,18 @@ import           Data.Either.Combinators                              (fromRight
 import           Data.Text                                            (Text)
 import           Database.MongoDB                                     (Document,
                                                                        Field,
+                                                                       Host,
                                                                        Pipe,
                                                                        access,
                                                                        close,
                                                                        connect,
                                                                        deleteAll,
                                                                        find,
-                                                                       host,
                                                                        insertAll_,
                                                                        insert_,
                                                                        limit,
                                                                        master,
+                                                                       readHostPort,
                                                                        rest,
                                                                        select)
 import           Database.MongoDB.Wrapper.Internal.AesonBsonConverter (fromDocument,
@@ -43,12 +48,21 @@ import           Database.MongoDB.Wrapper.Internal.AesonBsonConverter (fromDocum
 import           System.BCD.Config.Mongo                              (FromJsonConfig (..),
                                                                        MongoConfig (..))
 
-dbHost :: IO String
-dbHost = fmap _host fromJsonConfig
+
+
+-- | Loads 'Host' from config.json.
+--
+dbHost :: IO Host
+dbHost = do
+  MongoConfig{..} <- fromJsonConfig
+  pure . readHostPort $ _host ++ ":" ++ show _port
+
+dbPipe :: IO Pipe
+dbPipe = dbHost >>= connect
 
 putIntoDB :: ToJSON a => Text -> Text -> a -> IO ()
 putIntoDB dataBaseName collectionName obj = do
-  pipe <- join (connect <$> fmap host dbHost)
+  pipe <- dbPipe
   access pipe master dataBaseName (insertAll_ collectionName [fromDoc . toBson . toJSON $ obj])
   close pipe
 
@@ -58,7 +72,7 @@ putIntoDBPipe pipe dataBaseName collectionName obj =
 
 getFromDB :: FromJSON a => [Field] -> Text -> Text -> IO (Either String a)
 getFromDB selector dataBaseName collectionName = do
-  pipe <- join (connect <$> fmap host dbHost)
+  pipe <- dbPipe
   items <- access pipe master dataBaseName $ find (select selector collectionName) >>= rest
   close pipe
   case items of
@@ -67,29 +81,28 @@ getFromDB selector dataBaseName collectionName = do
 
 insertAllDB :: ToJSON a => Text -> Text -> [a] -> IO ()
 insertAllDB dataBaseName collectionName items = do
-  pipe <- join (connect <$> fmap host dbHost)
+  pipe <- dbPipe
   access pipe master dataBaseName $ insertAll_ collectionName (fmap (fromDoc . toBson . toJSON) items)
   close pipe
 
 getPipe :: IO Pipe
-getPipe = join (connect <$> fmap host dbHost)
+getPipe = dbPipe
 
 closePipe :: Pipe -> IO ()
 closePipe = close
 
 deleteFromDB :: [[Field]] -> Text -> Text -> IO ()
 deleteFromDB selectors dataBaseName collectionName = do
-  pipe <- join (connect <$> fmap host dbHost)
+  pipe <- dbPipe
   _ <- access pipe master dataBaseName (deleteAll collectionName (fmap (id &&& const []) selectors))
   close pipe
 
 getAllS :: (FromJSON a, NFData a) => Int -> Text -> Text -> [Field] -> IO [a]
 getAllS toLoad dBName collName selection = do
-  pipe <- join (connect <$> fmap host dbHost)
+  pipe <- dbPipe
   resS <- access pipe master dBName $ find ((select selection collName) {limit = fromIntegral toLoad}) >>= rest
   close pipe
-  base <- mapM (evaluate . force . fromRight' . fromResult . fromJSON . fromDocument) resS
-  return base
+  mapM (evaluate . force . fromRight' . fromResult . fromJSON . fromDocument) resS
 
 fromResult:: FromJSON a => Result a -> Either String a
 fromResult (Error msg)      = Left ("*** Error: extracting DBUnit failed.\n" ++ msg)

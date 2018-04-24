@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Database.MongoDB.Wrapper.Internal.AesonBsonConverter
   ( fromBson, toBson
   , fromDocument
@@ -9,7 +7,8 @@ import qualified Data.Aeson          as A
 import qualified Data.Aeson.Types    as AT
 import qualified Data.Bson           as B
 import qualified Data.HashMap.Strict as M
-import           Data.Scientific     (fromFloatDigits, toBoundedInteger, toRealFloat)
+import           Data.Scientific     (fromFloatDigits, toBoundedInteger,
+                                      toRealFloat)
 import qualified Data.Text           as T
 import qualified Data.Vector         as V
 
