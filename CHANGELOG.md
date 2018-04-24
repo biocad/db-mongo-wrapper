@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.1.0.6] - 2018-04-24
+### Added
+- `updateInDB` function.
+
 ## [0.1.0.5] - 2018-04-24
 ### Added
 - Additional functions and exports.

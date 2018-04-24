@@ -11,6 +11,7 @@ module Database.MongoDB.Wrapper.Internal.Interaction
   , getFromDB
   , getPipe
   , insertAllDB
+  , updateInDB
   , putIntoDB, putIntoDBPipe
   ) where
 
@@ -18,7 +19,6 @@ import           Control.Arrow                                        ((&&&))
 import           Control.DeepSeq                                      (NFData,
                                                                        force)
 import           Control.Exception                                    (evaluate)
-import           Control.Monad                                        (join)
 import           Data.Aeson                                           (FromJSON,
                                                                        ToJSON,
                                                                        fromJSON,
@@ -31,6 +31,7 @@ import           Database.MongoDB                                     (Document,
                                                                        Field,
                                                                        Host,
                                                                        Pipe,
+                                                                       UpdateOption (..),
                                                                        access,
                                                                        close,
                                                                        connect,
@@ -42,7 +43,8 @@ import           Database.MongoDB                                     (Document,
                                                                        master,
                                                                        readHostPort,
                                                                        rest,
-                                                                       select)
+                                                                       select,
+                                                                       updateAll)
 import           Database.MongoDB.Wrapper.Internal.AesonBsonConverter (fromDocument,
                                                                        toBson)
 import           System.BCD.Config.Mongo                              (FromJsonConfig (..),
@@ -63,7 +65,13 @@ dbPipe = dbHost >>= connect
 putIntoDB :: ToJSON a => Text -> Text -> a -> IO ()
 putIntoDB dataBaseName collectionName obj = do
   pipe <- dbPipe
-  access pipe master dataBaseName (insertAll_ collectionName [fromDoc . toBson . toJSON $ obj])
+  _ <- access pipe master dataBaseName (insertAll_ collectionName [fromDoc . toBson . toJSON $ obj])
+  close pipe
+
+updateInDB :: ToJSON a => [Field] -> Text -> Text -> a -> IO ()
+updateInDB selector dataBaseName collectionName obj = do
+  pipe <- dbPipe
+  _ <- access pipe master dataBaseName (updateAll collectionName [(selector, fromDoc . toBson . toJSON $ obj, [Upsert])])
   close pipe
 
 putIntoDBPipe :: ToJSON a => Pipe -> Text -> Text -> a -> IO ()
@@ -82,7 +90,7 @@ getFromDB selector dataBaseName collectionName = do
 insertAllDB :: ToJSON a => Text -> Text -> [a] -> IO ()
 insertAllDB dataBaseName collectionName items = do
   pipe <- dbPipe
-  access pipe master dataBaseName $ insertAll_ collectionName (fmap (fromDoc . toBson . toJSON) items)
+  _ <- access pipe master dataBaseName $ insertAll_ collectionName (fmap (fromDoc . toBson . toJSON) items)
   close pipe
 
 getPipe :: IO Pipe
