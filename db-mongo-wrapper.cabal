@@ -1,5 +1,5 @@
 name:           db-mongo-wrapper
-version:        0.1.0.6
+version:        0.1.0.7
 synopsis:       Library for simplified interaction with mongo database in our projects
 description:    Library for simplified interaction with mongo database in our projects
 homepage:       https://github.com/biocad/db-mongo-wrapper#readme
@@ -15,8 +15,10 @@ cabal-version:  >= 1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Database.MongoDB.Wrapper
+                     , Database.MongoDB.WrapperNew
   other-modules:       Database.MongoDB.Wrapper.Internal.AesonBsonConverter
                      , Database.MongoDB.Wrapper.Internal.Interaction
+                     , Database.MongoDB.Wrapper.Internal.InteractionNew
   build-depends:       base >=4.7 && <5
                      , aeson
                      , bcd-config
