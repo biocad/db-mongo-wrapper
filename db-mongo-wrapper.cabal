@@ -1,5 +1,5 @@
 name:           db-mongo-wrapper
-version:        0.1.0.7
+version:        0.1.0.8
 synopsis:       Library for simplified interaction with mongo database in our projects
 description:    Library for simplified interaction with mongo database in our projects
 homepage:       https://github.com/biocad/db-mongo-wrapper#readme
@@ -23,6 +23,7 @@ library
                      , aeson
                      , bcd-config
                      , bson
+                     , containers
                      , deepseq
                      , either
                      , mongoDB

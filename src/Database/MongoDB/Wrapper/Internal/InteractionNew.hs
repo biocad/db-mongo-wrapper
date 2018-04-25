@@ -6,6 +6,7 @@
 module Database.MongoDB.Wrapper.Internal.InteractionNew
   (
     FromJsonConfig (..)
+  , mongoContextFromJsonConfig
   , encode
   , decode
   , find
@@ -21,14 +22,13 @@ import           Data.Aeson                                           (FromJSON 
                                                                        toJSON)
 import           Data.Aeson.Types                                     (Result (..))
 import qualified Data.Bson                                            as B (Value (..))
-import           Data.Text                                            (Text,
-                                                                       pack)
+import           Data.Map.Strict                                      (findWithDefault)
+import           Data.Text                                            (Text)
 import qualified Database.MongoDB                                     as MDB
 import           Database.MongoDB.Wrapper.Internal.AesonBsonConverter (fromDocument,
                                                                        toBson)
 import           System.BCD.Config.Mongo                              (FromJsonConfig (..),
                                                                        MongoConfig (..))
-
 
 -- | Loads 'Host' from config.json.
 --
@@ -44,11 +44,12 @@ instance FromJsonConfig MDB.Pipe where
 
 -- | Loads 'MongoContext' from config.json.
 --
-instance FromJsonConfig MDB.MongoContext where
-  fromJsonConfig = do
-      MongoConfig{..} <- fromJsonConfig
-      pipe'           <- fromJsonConfig
-      pure $ MDB.MongoContext pipe' MDB.master (pack _database)
+mongoContextFromJsonConfig :: String -> IO MDB.MongoContext
+mongoContextFromJsonConfig databaseVar = do
+    MongoConfig{..} <- fromJsonConfig
+    pipe'           <- fromJsonConfig
+    let databaseName = findWithDefault (error $ "Mongo database could not be found by var: " ++ databaseVar) databaseVar _databases
+    pure $ MDB.MongoContext pipe' MDB.master databaseName
 
 -- | For given 'MongoContext' and 'Action' runs it and returns result from database.
 --
