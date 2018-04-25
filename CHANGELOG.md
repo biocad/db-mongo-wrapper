@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.1.0.8] - 2018-04-25
+### Changed
+- Config load in WrapperNew.
+
 ## [0.1.0.7] - 2018-04-24
 ### Added
 - WrapperNew.
