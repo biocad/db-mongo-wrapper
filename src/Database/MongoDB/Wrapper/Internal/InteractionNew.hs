@@ -23,7 +23,8 @@ import           Data.Aeson                                           (FromJSON 
 import           Data.Aeson.Types                                     (Result (..))
 import qualified Data.Bson                                            as B (Value (..))
 import           Data.Map.Strict                                      (findWithDefault)
-import           Data.Text                                            (Text)
+import           Data.Text                                            (Text,
+                                                                       pack)
 import qualified Database.MongoDB                                     as MDB
 import           Database.MongoDB.Wrapper.Internal.AesonBsonConverter (fromDocument,
                                                                        toBson)
@@ -42,6 +43,7 @@ instance FromJsonConfig MDB.Host where
 instance FromJsonConfig MDB.Pipe where
   fromJsonConfig = fromJsonConfig >>= liftIO . MDB.connect
 
+
 -- | Loads 'MongoContext' from config.json.
 --
 mongoContextFromJsonConfig :: String -> IO MDB.MongoContext
@@ -49,7 +51,11 @@ mongoContextFromJsonConfig databaseVar = do
     MongoConfig{..} <- fromJsonConfig
     pipe'           <- fromJsonConfig
     let databaseName = findWithDefault (error $ "Mongo database could not be found by var: " ++ databaseVar) databaseVar _databases
+    _ <- testAccess pipe' databaseName (pack _user) (pack _password)
     pure $ MDB.MongoContext pipe' MDB.master databaseName
+  where
+    testAccess :: MDB.Pipe -> MDB.Database -> MDB.Username -> MDB.Password -> IO ()
+    testAccess pipe database username password = MDB.access pipe MDB.UnconfirmedWrites database (MDB.auth username password) >> pure ()
 
 -- | For given 'MongoContext' and 'Action' runs it and returns result from database.
 --
