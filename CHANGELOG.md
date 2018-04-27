@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.1.1.0] - 2018-04-27
+### Added
+- Working with pool of pipes in WrapperNew.
+### Removed
+- Working with `MongoContext`.
+
 ## [0.1.0.9] - 2018-04-26
 ### Added
 - Authorization in WrapperNew.
