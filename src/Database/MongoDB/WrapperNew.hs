@@ -9,8 +9,8 @@ module Database.MongoDB.WrapperNew
   (
     MongoPool (..)
   , FromJsonConfig (..)
-  , loadMongoPipe
   , loadMongoPool
+  , loadMongoPoolDotenv
   , withMongoPool
   , encode
   , decode
@@ -26,7 +26,6 @@ import           Data.Aeson                                           (FromJSON 
                                                                        toJSON)
 import           Data.Aeson.Types                                     (Result (..))
 import qualified Data.Bson                                            as B (Value (..))
-import           Data.Map.Strict                                      (findWithDefault)
 import           Data.Pool                                            (Pool, createPool,
                                                                        withResource)
 import           Data.Text                                            (Text,
@@ -34,7 +33,7 @@ import           Data.Text                                            (Text,
 import qualified Database.MongoDB                                     as DB
 import           Database.MongoDB.Wrapper.Internal.AesonBsonConverter (fromDocument,
                                                                        toBson)
-import           System.BCD.Config.Mongo                              (FromJsonConfig (..),
+import           System.BCD.Config.Mongo                              (FromJsonConfig (..), FromDotenv(..),
                                                                        MongoConfig (..))
 
 -- | 'MongoPool' contains information about 'Database' name and 'Pool' with 'Pipe's.
@@ -46,16 +45,15 @@ data MongoPool = MongoPool { database :: DB.Database  -- ^ name of the database
 -- | Loads 'Host' from config.json.
 --
 instance FromJsonConfig DB.Host where
-  fromJsonConfig = do
-      MongoConfig{..} <- fromJsonConfig
-      pure . DB.readHostPort $ _host ++ ":" ++ show _port
+  fromJsonConfig = fmap createHost fromJsonConfig
+
+createHost :: MongoConfig -> DB.Host
+createHost MongoConfig{..} = DB.readHostPort $ _host ++ ":" ++ show _port
 
 -- | Loads settings from config.json and creates 'Pipe'.
 --
-loadMongoPipe :: DB.Database -> DB.Username -> DB.Password -> IO DB.Pipe
-loadMongoPipe database' user' password' = do
-    host' <- fromJsonConfig
-    DB.connect host' >>= testAccess
+loadMongoPipe :: DB.Host -> DB.Database -> DB.Username -> DB.Password -> IO DB.Pipe
+loadMongoPipe host' database' user' password' = DB.connect host' >>= testAccess
   where
     testAccess :: DB.Pipe -> IO DB.Pipe
     testAccess pipe = DB.access pipe DB.UnconfirmedWrites database' (DB.auth user' password') >> pure pipe
@@ -63,12 +61,20 @@ loadMongoPipe database' user' password' = do
 -- | Loads 'MongoPool' from config.json.
 --
 loadMongoPool :: String -> IO MongoPool
-loadMongoPool databaseVar = do
-    MongoConfig{..} <- fromJsonConfig
-    let database = findWithDefault (error $ "Mongo database could not be found by var: " ++ databaseVar) databaseVar _databases
-    let connect = loadMongoPipe database (pack _user) (pack _password)
+loadMongoPool _ = do
+    mc@MongoConfig{..} <- fromJsonConfig
+    let connect = loadMongoPipe (createHost mc) (pack _database) (pack _user) (pack _password)
     -- 4, 30 and 1 some defaults values for stripes, timeout and resource per second
-    MongoPool database <$> createPool connect DB.close 4 30 1
+    MongoPool (pack _database) <$> createPool connect DB.close 4 30 1
+
+-- | Loads 'MongoPool' from .env.
+--
+loadMongoPoolDotenv :: IO MongoPool
+loadMongoPoolDotenv = do
+    mc@MongoConfig{..} <- fromDotenv
+    let connect = loadMongoPipe (createHost mc) (pack _database) (pack _user) (pack _password)
+    -- 4, 30 and 1 some defaults values for stripes, timeout and resource per second
+    MongoPool (pack _database) <$> createPool connect DB.close 4 30 1
 
 -- | Takes 'MongoPool' and runs the 'Action'.
 --
