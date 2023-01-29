@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.2.0.1] - 2023-01-29
+### Changed
+- Fix for GHC 9.2.5.
+
 ## [0.2.0.0] - 2019-10-21
 ### Added
 - `dotenv` configuration.
