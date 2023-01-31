@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module Database.MongoDB.Wrapper.Internal.AesonBsonConverter
   ( fromBson, toBson
   , fromDocument
@@ -5,8 +7,15 @@ module Database.MongoDB.Wrapper.Internal.AesonBsonConverter
 
 import qualified Data.Aeson          as A
 import qualified Data.Aeson.Types    as AT
-import qualified Data.Bson           as B
+
+#if MIN_VERSION_aeson(2, 0, 0)
+import           Data.Aeson.Key      (fromText, toText)
+import qualified Data.Aeson.KeyMap   as KM
+#else
 import qualified Data.HashMap.Strict as M
+#endif
+
+import qualified Data.Bson           as B
 import           Data.Scientific     (fromFloatDigits, toBoundedInteger,
                                       toRealFloat)
 import qualified Data.Text           as T
@@ -22,7 +31,11 @@ toBson (A.Number n) =
     Just x  -> B.Int64 x
 toBson (A.Bool b)   = B.Bool b
 toBson (A.Array a)  = B.Array $ map toBson (V.toList a)
+#if MIN_VERSION_aeson(2, 0, 0)
+toBson (A.Object o) = B.Doc $ map (\(k, v) -> toText k =: toBson v) (KM.toList o)
+#else
 toBson (A.Object o) = B.Doc $ map (\(k, v) -> k =: toBson v) (M.toList o)
+#endif
 toBson A.Null       = B.Null
 
 fromBson :: B.Value -> A.Value
@@ -49,7 +62,11 @@ fromBson (B.JavaScr _) = A.Null
 fromBson (B.Sym _)     = A.Null
 
 fieldToPair :: B.Field -> AT.Pair
+#if MIN_VERSION_aeson(2, 0, 0)
+fieldToPair f = (fromText (B.label f), fromBson (B.value f))
+#else
 fieldToPair f = (B.label f, fromBson (B.value f))
+#endif
 
 fromDocument :: B.Document -> A.Value
 fromDocument d = A.object $ map fieldToPair d
